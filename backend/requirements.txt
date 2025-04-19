@@ -1,3 +1,5 @@
 FastAPI
 sqlalchemy
 python-dotenv
+asyncmy
+greenlet
