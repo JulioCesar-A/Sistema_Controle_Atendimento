@@ -32,11 +32,13 @@ class SenhaResponse(BaseModel):
         "json_schema_extra" : {
             "examples" : [
                 {
+                    "id" : 1,
                     "tipo_senha" : "SP",
-                    "numero_sequencia" : "1",
+                    "numero_sequencia" : 1,
                     "data_hora_emissao" : "2025-04-18 21:07:47.883006"
                 },
                 {
+                    "id" : 4,
                     "tipo_senha" : "SG",
                     "numero_sequencia" : "52",
                     "data_hora_emissao" : "2025-04-18 21:10:14.306505",
