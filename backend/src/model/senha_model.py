@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Enum, DATETIME, String, Integer
 from schema.senha_schemas import TipoSenha
-from database_config import Base
+from backend.src.database.database_config import Base
 
 class Senha(Base):
     id = Column("ID_SENHA", Integer, primary_key = True)
