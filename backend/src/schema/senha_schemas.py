@@ -15,11 +15,9 @@ class SenhaEmitidaCreateSchema(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-
 class SenhaAtendidaCreateSchema(SenhaEmitidaCreateSchema):
     data_hora_atendimento : datetime = datetime.now(),
     guiche_atendimento : str
-
 
 class SenhaReponse(BaseModel):
     id_senha : int
@@ -49,4 +47,3 @@ class SenhaReponse(BaseModel):
             ]
         }
     }
-
