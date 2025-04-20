@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import func
+from sqlalchemy import func, null
 from sqlalchemy.future import select
-from schema.senha_schemas import SenhaAtendidaCreateSchema, SenhaEmitidaCreateSchema, SenhaResponse
+from schema.senha_schemas import *
 from model.senha_model import Senha
 from datetime import date, datetime, time
 import random
@@ -13,6 +13,8 @@ class SenhaRepositorio():
     def __init__(self, db: AsyncSession):
         print("SenhaRepositorio inicializado com db:", db)
         self.db = db
+
+
 
     async def contar_senhas_diario (self, senha_emitida : SenhaEmitidaCreateSchema):
         try:
@@ -75,23 +77,21 @@ class SenhaRepositorio():
             raise ValueError("Tipo de senha inválido. Valores Aceitos: 'SP', 'SG', 'SE'.")
         
 
-
-    async def buscar_senhas(self):
+    # função para testes (apenas)
+    async def listar_todas_senhas(self):
         query = await self.db.execute(select(Senha))
         senhas = query.scalars().all()
-        return [SenhaResponse.model_validate(senha) for senha in senhas]
+        return [SenhaAtendidaResponse.model_validate(senha) for senha in senhas]
         
 
     async def buscar_senha(self, numero_sequencia : int, tipo_senha : str):
         inicio_dia = datetime.combine(date.today(), time.min)
         fim_dia = datetime.combine(date.today(), time.max)
         query = await self.db.execute(select(Senha)
-                                      .filter(Senha.data_hora_emissao >= inicio_dia)
-                                      .filter(Senha.data_hora_emissao <= fim_dia)
-                                      .filter(Senha.tipo_senha == tipo_senha)
                                       .filter(Senha.numero_sequencia == numero_sequencia)
-                                      )
-        
+                                      .filter(Senha.tipo_senha == tipo_senha)
+                                      .filter(Senha.data_hora_emissao >= inicio_dia)
+                                      .filter(Senha.data_hora_emissao <= fim_dia))
         senha_existente = query.scalars().first()
 
         return senha_existente
@@ -118,13 +118,13 @@ class SenhaRepositorio():
                 detail="Erro de integridade: dados duplicados ou incorretos"
             )
         
-    async def atualizar_senha(self, senha_atendida : SenhaAtendidaCreateSchema):
+    async def atualizar_senha(self, senha_atendida : SenhaAtendidaCreateSchema, guiche : str):
         senha_existente = await self.buscar_senha(senha_atendida.numero_sequencia, senha_atendida.tipo_senha.value)
         
         if senha_existente:
             senha_existente.data_hora_atendimento = senha_atendida.data_hora_atendimento
             senha_existente.tempo_atendimento = await self.definir_tempo_atendimento(senha_existente.tipo_senha)
-            senha_existente.guiche_atendimento = senha_atendida.guiche_atendimento
+            senha_existente.guiche_atendimento = guiche
 
             await self.db.commit()
             await self.db.refresh(senha_existente)

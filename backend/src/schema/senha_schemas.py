@@ -15,19 +15,24 @@ class SenhaEmitidaCreateSchema(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
-class SenhaAtendidaCreateSchema(SenhaEmitidaCreateSchema):
-    numero_sequencia : int
-    data_hora_atendimento : datetime = datetime.now(),
-    guiche_atendimento : str
-
-class SenhaResponse(BaseModel):
-    id : int
+class SenhaEmitidaResponse(BaseModel):
     tipo_senha : TipoSenha
     numero_sequencia : int
     data_hora_emissao : datetime
+
+class SenhaAtendidaCreateSchema(BaseModel):
+    tipo_senha : TipoSenha
+    numero_sequencia : int
+    data_hora_emissao : datetime
+    data_hora_atendimento : datetime = datetime.now()
+
+    class Config:
+        arbitrary_types_allowed = True
+
+class SenhaAtendidaResponse(SenhaEmitidaResponse):
     data_hora_atendimento : Optional[datetime] = None
     tempo_atendimento : Optional[int] = None
-    guiche_atendimento : Optional[datetime] = None
+    guiche_atendimento : Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -15,7 +15,8 @@ router = APIRouter(
     }
 )
 
-@router.post("/emitir-senha", status_code = 201, summary="Emite uma senha", response_model = SenhaResponse)
+
+@router.post("/emitir-senha", status_code = 201, summary="Emite uma senha", response_model = SenhaEmitidaResponse)
 async def emitir_senha(senha : SenhaEmitidaCreateSchema, db : AsyncSession = Depends(get_db)):
     try:
         repositorio_senha = SenhaRepositorio(db)
@@ -27,17 +28,16 @@ async def emitir_senha(senha : SenhaEmitidaCreateSchema, db : AsyncSession = Dep
         raise HTTPException(status_code=500, detail=f"Erro ao emitir senha: {str(e)}")
     
 
-@router.get("/", status_code=200, response_model=List[SenhaResponse])
-async def buscar_senhas(db : AsyncSession = Depends(get_db)):
+@router.get("/", status_code=200, response_model=List[SenhaAtendidaResponse])
+async def listar_todas_senhas(db : AsyncSession = Depends(get_db)):
     repositorio_senha = SenhaRepositorio(db)
-    return await repositorio_senha.buscar_senhas()
+    return await repositorio_senha.listar_todas_senhas()
 
-@router.put("/chamar-senha", status_code=200, response_model=SenhaResponse)
-async def chamar_senha(senha : SenhaAtendidaCreateSchema, db : AsyncSession = Depends(get_db)):
+@router.put("/{guiche}/atender-senha", status_code=200, response_model=SenhaAtendidaResponse)
+async def atender_senha(senha : SenhaAtendidaCreateSchema, guiche : str, db : AsyncSession = Depends(get_db)):
     try:
         repositorio_senha = SenhaRepositorio(db)
-
-        resultado = await repositorio_senha.atualizar_senha(senha)
+        resultado = await repositorio_senha.atualizar_senha(senha, guiche)
         return resultado
 
     except Exception as e:
