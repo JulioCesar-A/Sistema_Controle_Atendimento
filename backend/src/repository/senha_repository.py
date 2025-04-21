@@ -3,11 +3,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, null
 from sqlalchemy.future import select
+from schema.relatorio_schema import RelatorioCreate
 from schema.senha_schemas import *
 from model.senha_model import Senha
 from datetime import date, datetime, time
 import random
-
+import calendar
 
 class SenhaRepositorio():
     def __init__(self, db: AsyncSession):
@@ -16,7 +17,7 @@ class SenhaRepositorio():
 
 
 
-    async def contar_senhas_diario (self, senha_emitida : SenhaEmitidaCreateSchema):
+    async def contar_senhas (self, senha_emitida : SenhaEmitidaCreateSchema):
         try:
             inicio_dia = datetime.combine(date.today(), time.min)
             fim_dia = datetime.combine(date.today(), time.max)
@@ -39,7 +40,7 @@ class SenhaRepositorio():
 
     async def definir_numero_sequencia (self, senha_emitida : SenhaEmitidaCreateSchema):
         try:
-            total_senhas = await self.contar_senhas_diario(senha_emitida)
+            total_senhas = await self.contar_senhas(senha_emitida)
 
             if total_senhas == None or total_senhas == 0:
                 proximo_numero = 1
@@ -132,3 +133,136 @@ class SenhaRepositorio():
         
         else:
             raise ValueError("Senha não encontrada.")
+        
+
+    # Funções para relatório
+    async def contar_senhas_emitidas_por_prioridade(self, relatorio : RelatorioCreate, prioridade : str):
+        try:
+            if relatorio.tipo_relatorio.value == "M":
+
+                _, ultimo_dia = calendar.monthrange(relatorio.data_referencia.year, relatorio.data_referencia.month)
+
+                inicio_mes = datetime.combine(date(relatorio.data_referencia.year, relatorio.data_referencia.month, 1), time.min)
+
+                fim_mes = datetime.combine(date(relatorio.data_referencia.year, relatorio.data_referencia.month, ultimo_dia), time.max)
+
+
+                query = await self.db.execute(
+                    select(
+                        func.count(Senha.numero_sequencia)
+                        .filter(Senha.tipo_senha == prioridade)
+                        .filter(Senha.data_hora_emissao >= inicio_mes)
+                        .filter(Senha.data_hora_emissao <= fim_mes)
+                    ))
+
+                resultado = query.scalar()
+
+                return resultado or 0
+
+            
+            elif relatorio.tipo_relatorio.value == "D":
+                query = await self.db.execute(
+                    select(
+                        func.count(Senha.numero_sequencia)
+                        .filter(Senha.tipo_senha == prioridade)
+                        .filter(Senha.data_hora_emissao >= datetime.combine(relatorio.data_referencia, time.min))
+                        .filter(Senha.data_hora_emissao <= datetime.combine(relatorio.data_referencia, time.max))
+                    )
+                )
+
+                resultado = query.scalar()
+
+                return resultado or 0        
+            else:
+                raise ValueError("Tipo de Relatório Inválido. Valores Aceitos: 'M','D'")
+            
+        except IntegrityError as e:
+            raise HTTPException(status_code=400, detail="Erro de integridade ao contar senhas emitidas.")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erro interno ao contar senhas emitidas: {str(e)}")
+
+
+    async def contar_senhas_atendidas_por_prioridade(self, relatorio : RelatorioCreate, prioridade : str):
+        try:
+            if relatorio.tipo_relatorio.value == "M":
+
+                _, ultimo_dia = calendar.monthrange(relatorio.data_referencia.year, relatorio.data_referencia.month)
+
+                inicio_mes = datetime.combine(date(relatorio.data_referencia.year, relatorio.data_referencia.month, 1), time.min)
+
+                fim_mes = datetime.combine(date(relatorio.data_referencia.year, relatorio.data_referencia.month, ultimo_dia), time.max)
+
+
+                query = await self.db.execute(
+                    select(
+                        func.count(Senha.numero_sequencia)
+                        .filter(Senha.tipo_senha == prioridade)
+                        .filter(Senha.data_hora_emissao >= inicio_mes)
+                        .filter(Senha.data_hora_emissao <= fim_mes)
+                        .filter(Senha.data_hora_atendimento != null)
+                    ))
+
+                resultado = query.scalar()
+
+                return resultado or 0
+
+            
+            elif relatorio.tipo_relatorio.value == "D":
+                query = await self.db.execute(
+                    select(
+                        func.count(Senha.numero_sequencia)
+                        .filter(Senha.tipo_senha == prioridade)
+                        .filter(Senha.data_hora_emissao >= datetime.combine(relatorio.data_referencia, time.min))
+                        .filter(Senha.data_hora_emissao <= datetime.combine(relatorio.data_referencia, time.max))
+                        .filter(Senha.data_hora_atendimento != null)
+                    )
+                )
+
+                resultado = query.scalar()
+
+                return resultado or 0        
+            else:
+                raise ValueError("Tipo de Relatório Inválido. Valores Aceitos: 'M','D'")
+            
+        except IntegrityError as e:
+            raise HTTPException(status_code=400, detail="Erro de integridade ao contar senhas atendidas.")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erro interno ao contar senhas atendidas: {str(e)}")
+        
+    async def listar_senhas(self, relatorio : RelatorioCreate):
+        try:
+            if relatorio.tipo_relatorio.value == "M":
+
+                _, ultimo_dia = calendar.monthrange(relatorio.data_referencia.year, relatorio.data_referencia.month)
+
+                inicio_mes = datetime.combine(date(relatorio.data_referencia.year, relatorio.data_referencia.month, 1), time.min)
+
+                fim_mes = datetime.combine(date(relatorio.data_referencia.year, relatorio.data_referencia.month, ultimo_dia), time.max)
+
+
+                query = await self.db.execute(select(Senha)
+                    .filter(Senha.data_hora_emissao >= inicio_mes)
+                    .filter(Senha.data_hora_emissao <= fim_mes)
+                )
+
+                resultado = query.scalars().all()
+
+                return resultado or None
+
+            
+            elif relatorio.tipo_relatorio.value == "D":
+                query = await self.db.execute(select(Senha)
+                    .filter(Senha.data_hora_emissao >= datetime.combine(date.today(), time.min))
+                    .filter(Senha.data_hora_emissao <=  datetime.combine(date.today(), time.max))
+                )
+
+                resultado = query.scalars().all()
+
+                return resultado or None     
+            else:
+                raise ValueError("Tipo de Relatório Inválido. Valores Aceitos: 'M','D'")
+            
+        except IntegrityError as e:
+            raise HTTPException(status_code=400, detail="Erro de integridade ao listar senhas.")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Erro interno ao listar senhas: {str(e)}")
