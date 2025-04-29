@@ -19,6 +19,7 @@
 
 # Frontend Ionic (frontend-ionic)
 /frontend-ionic/node_modules/     
+/frontend-ionic/.angular/cache/*  
 /frontend-ionic/www/              
 /frontend-ionic/platforms/        
 /frontend-ionic/plugins/          

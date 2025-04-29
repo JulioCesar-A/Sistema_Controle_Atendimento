@@ -1,20 +1,65 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
-  </ion-toolbar>
+<ion-header>
+  <ion-title>
+    <h1>AtendiMED</h1>
+  </ion-title>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content>
+  <div (click)="sairTelaInicial()">
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+    <div *ngIf="conteudoControle.passo === 0">
+      <ion-text>
+        <h2> {{ conteudoControle.conteudoTitulo[conteudoControle.passo] }}</h2>
+      </ion-text>
+      <ion-text>
+        <p>Toque na tela para começar</p>
+      </ion-text>
+    </div>
+
+    <div *ngIf="conteudoControle.passo === 1">
+      <ion-text>
+        <h2> {{ conteudoControle.conteudoTitulo[conteudoControle.passo] }}</h2>
+      </ion-text>
+      
+      <ion-grid>
+        <ion-row>
+          <ion-button (click)="definirTipoSenha('SP')">Sim, sou prioridade</ion-button>
+        </ion-row>
+        <ion-row>
+          <ion-button (click)="definirTipoSenha('')">Não sou prioridade</ion-button>
+        </ion-row>        
+      </ion-grid>
+    </div>
+    
+    <div *ngIf="conteudoControle.passo === 2">
+      <ion-text>
+        <h2> {{ conteudoControle.conteudoTitulo[conteudoControle.passo] }}</h2>
+      </ion-text>
+
+      <ion-grid>
+        <ion-row>
+          <ion-button (click)="definirTipoSenha('SG')">Agendar consulta</ion-button>
+        </ion-row>
+        <ion-row>
+          <ion-button (click)="definirTipoSenha('SE')">Retirar exame</ion-button>
+        </ion-row>
+      </ion-grid>
+    </div>
+    
+    <div *ngIf="conteudoControle.passo === 3">
+      <ion-text>
+        <h2> {{ conteudoControle.conteudoTitulo[conteudoControle.passo] }}</h2>
+      </ion-text>
+    
+      <ion-text>
+        <p class="senha__emitida"> {{ senhaEmitirFormatada }} </p>
+      </ion-text>
+    
+    </div>
+    
+    <!--
+    
+
+    <ion-icon slot="icon-only" name="add"></ion-icon> -->
   </div>
-</ion-content>
+</ion-content>  
